@@ -4,6 +4,8 @@ import android.content.Context
 import android.database.ContentObserver
 import android.graphics.drawable.Icon
 import android.media.AudioManager
+import android.media.RingtoneManager
+import android.net.Uri
 import android.os.Handler
 import android.os.Looper
 import android.provider.Settings
@@ -15,9 +17,10 @@ import android.widget.ImageView
 import android.widget.SeekBar
 import android.widget.TextView
 
-
-class RingerModeListAdapter(private val _context: Context, private val _list: List<RingerMode>) :
-    BaseAdapter() {
+class RingerModeListAdapter(
+    private val _context: Context,
+    private val _list: List<RingerMode>
+) : BaseAdapter() {
 
     internal class ViewHolder {
         var icon: ImageView? = null
@@ -65,7 +68,6 @@ class RingerModeListAdapter(private val _context: Context, private val _list: Li
         viewHolder.label?.text = _context.getString(mode.label)
         viewHolder.label?.textSize = 20f
 
-
         viewHolder.bar?.max = audio.getStreamMaxVolume(mode.id)
         viewHolder.bar?.min = audio.getStreamMinVolume(mode.id)
         viewHolder.bar?.progress = audio.getStreamVolume(mode.id)
@@ -76,11 +78,32 @@ class RingerModeListAdapter(private val _context: Context, private val _list: Li
 
             override fun onStartTrackingTouch(seekBar: SeekBar) {
                 // Write code to perform some action when touch is started.
+                val ringtone = (_context as MainActivity).ringtone
+                ringtone?.stop()
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
                 // Write code to perform some action when touch is stopped.
                 audio.setStreamVolume(mode.id, seekBar.progress, 0)
+                // Play sample
+                val volNow = audio.getStreamVolume(mode.id)
+                val volMax = audio.getStreamMaxVolume(mode.id)
+                val volPlay = (volNow.toDouble() / volMax).toFloat()
+                var ringtoneUri: Uri? = null
+                when (mode.id) {
+                    AudioManager.STREAM_MUSIC,
+                    AudioManager.STREAM_VOICE_CALL ->
+                        ringtoneUri = Uri.parse("content://media/internal/audio/media/122")
+                    AudioManager.STREAM_RING ->
+                        ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+                    AudioManager.STREAM_ALARM ->
+                        ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+
+                }
+                val ringtone = RingtoneManager.getRingtone(_context, ringtoneUri)
+                ringtone?.volume = volPlay
+                ringtone?.play()
+                (_context as MainActivity).ringtone = ringtone
             }
         })
 

@@ -1,15 +1,24 @@
 package com.hitomaru.volumecontrol
 
 import android.media.AudioManager
+import android.media.Ringtone
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
-import android.widget.*
+import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
+
+    private var _rington: Ringtone? = null
+
+    public var ringtone: Ringtone?
+        get() = _rington
+        set(value) {
+            _rington = value
+        }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -38,6 +47,11 @@ class MainActivity : AppCompatActivity() {
             R.id.action_settings -> true
             else -> super.onOptionsItemSelected(item)
         }
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        _rington?.stop()
     }
 
     private fun runCustomize() {
