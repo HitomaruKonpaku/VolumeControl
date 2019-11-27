@@ -61,7 +61,10 @@ class RingerModeListAdapter(private val _context: Context, private val _list: Li
         val mode = _list[position]
 
         viewHolder.icon?.setImageIcon(Icon.createWithResource(_context, mode.icon))
+
         viewHolder.label?.text = _context.getString(mode.label)
+        viewHolder.label?.textSize = 20f
+
 
         viewHolder.bar?.max = audio.getStreamMaxVolume(mode.id)
         viewHolder.bar?.min = audio.getStreamMinVolume(mode.id)
