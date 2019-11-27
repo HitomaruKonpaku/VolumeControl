@@ -76,6 +76,7 @@ class RingerModeTileService : TileService() {
             // Update looks
             qsTile.updateTile()
         } catch (ex: Exception) {
+            @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
             Log.e("Tile", ex.message)
         }
     }
@@ -104,6 +105,7 @@ class RingerModeTileService : TileService() {
                 }
             }
         } catch (ex: Exception) {
+            @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
             Log.e("RingerMode", ex.message)
         }
     }
