@@ -1,8 +1,10 @@
 package com.hitomaru.volumecontrol
 
+import android.media.AudioManager
 import android.os.Bundle
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.*
 import androidx.appcompat.app.AppCompatActivity
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_main.*
@@ -18,12 +20,14 @@ class MainActivity : AppCompatActivity() {
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null).show()
         }
+
+        runCustomize()
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
         // Inflate the menu; this adds items to the action bar if it is present.
         menuInflater.inflate(R.menu.menu_main, menu)
-        return true
+        return false
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
@@ -35,4 +39,32 @@ class MainActivity : AppCompatActivity() {
             else -> super.onOptionsItemSelected(item)
         }
     }
+
+    private fun runCustomize() {
+        val lv = findViewById<ListView>(R.id.ringer_mode_list)
+        val modes = listOf(
+            RingerMode(
+                R.drawable.ic_audio_stream_music,
+                R.string.stream_music,
+                AudioManager.STREAM_MUSIC
+            ),
+            RingerMode(
+                R.drawable.ic_audio_stream_call,
+                R.string.stream_call,
+                AudioManager.STREAM_VOICE_CALL
+            ),
+            RingerMode(
+                R.drawable.ic_audio_stream_ring,
+                R.string.stream_ring,
+                AudioManager.STREAM_RING
+            ),
+            RingerMode(
+                R.drawable.ic_audio_stream_alarm,
+                R.string.stream_alarm,
+                AudioManager.STREAM_ALARM
+            )
+        )
+        lv.adapter = RingerModeListAdapter(this, modes)
+    }
+
 }

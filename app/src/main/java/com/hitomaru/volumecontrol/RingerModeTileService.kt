@@ -16,15 +16,15 @@ class RingerModeTileService : TileService() {
             val audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
             when (audio.ringerMode) {
                 AudioManager.RINGER_MODE_NORMAL -> return mapOf(
-                    "icon" to R.drawable.ic_ringer_mode_normal_black_24dp,
+                    "icon" to R.drawable.ic_audio_ringer_mode_normal,
                     "label" to R.string.ringer_mode_normal
                 )
                 AudioManager.RINGER_MODE_VIBRATE -> return mapOf(
-                    "icon" to R.drawable.ic_ringer_mode_vibrate_black_24dp,
+                    "icon" to R.drawable.ic_audio_ringer_mode_vibrate,
                     "label" to R.string.ringer_mode_vibrate
                 )
                 AudioManager.RINGER_MODE_SILENT -> return mapOf(
-                    "icon" to R.drawable.ic_ringer_mode_silent_black_24dp,
+                    "icon" to R.drawable.ic_audio_ringer_mode_silent,
                     "label" to R.string.ringer_mode_silent
                 )
             }

@@ -4,4 +4,8 @@
     <string name="ringer_mode_normal">Sound</string>
     <string name="ringer_mode_vibrate">Vibrate</string>
     <string name="ringer_mode_silent">Silent</string>
+    <string name="stream_music">Media volume</string>
+    <string name="stream_call">Call volume</string>
+    <string name="stream_ring">Ring volume</string>
+    <string name="stream_alarm">Alarm volume</string>
 </resources>

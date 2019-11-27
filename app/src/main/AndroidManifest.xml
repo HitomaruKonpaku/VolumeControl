@@ -16,7 +16,7 @@
 
         <service
             android:name=".RingerModeTileService"
-            android:icon="@drawable/ic_ringer_mode_normal_black_24dp"
+            android:icon="@drawable/ic_audio_ringer_mode_normal"
             android:label="@string/ringer_mode_normal"
             android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
             <intent-filter>
