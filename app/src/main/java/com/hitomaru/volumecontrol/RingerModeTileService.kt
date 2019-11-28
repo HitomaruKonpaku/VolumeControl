@@ -1,8 +1,10 @@
 package com.hitomaru.volumecontrol
 
 import android.app.NotificationManager
+import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.graphics.drawable.Icon
 import android.media.AudioManager
 import android.provider.Settings
@@ -11,7 +13,7 @@ import android.util.Log
 
 class RingerModeTileService : TileService() {
 
-    private val tileData: Map<String, Any>
+    private val _tileData: Map<String, Any>
         get() {
             val audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
             when (audio.ringerMode) {
@@ -34,42 +36,25 @@ class RingerModeTileService : TileService() {
     override fun onCreate() {
         super.onCreate()
         Log.d("onCreate", "")
-        updateTile()
+
+        val receiver: BroadcastReceiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context?, intent: Intent?) {
+                updateTile()
+            }
+        }
+        val filter = IntentFilter(AudioManager.RINGER_MODE_CHANGED_ACTION)
+        registerReceiver(receiver, filter)
     }
 
-    override fun onTileAdded() {
-        super.onTileAdded()
-        Log.d("onTileAdded", "")
-        updateTile()
-    }
-
-    override fun onTileRemoved() {
-        super.onTileRemoved()
-        Log.d("onTileRemoved", "")
-        updateTile()
-    }
-
-    override fun onStartListening() {
-        super.onStartListening()
-        Log.d("onStartListening", "")
-        updateTile()
-    }
-
-    override fun onStopListening() {
-        super.onStopListening()
-        Log.d("onStopListening", "")
-        updateTile()
-    }
 
     override fun onClick() {
         super.onClick()
         updateRingerMode()
-        updateTile()
     }
 
     private fun updateTile() {
         try {
-            val data = tileData
+            val data = _tileData
             // Data
             qsTile.icon = Icon.createWithResource(this, data["icon"] as Int)
             qsTile.label = getString(data["label"] as Int)
