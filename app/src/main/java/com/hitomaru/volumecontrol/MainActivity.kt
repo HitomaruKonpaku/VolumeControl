@@ -12,12 +12,12 @@ import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
 
-    private var _rington: Ringtone? = null
+    private var _ringtone: Ringtone? = null
 
-    public var ringtone: Ringtone?
-        get() = _rington
+    var ringtone: Ringtone?
+        get() = _ringtone
         set(value) {
-            _rington = value
+            _ringtone = value
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -51,7 +51,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         super.onWindowFocusChanged(hasFocus)
-        _rington?.stop()
+        _ringtone?.stop()
     }
 
     private fun runCustomize() {

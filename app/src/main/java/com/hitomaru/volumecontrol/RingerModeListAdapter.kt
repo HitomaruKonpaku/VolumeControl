@@ -8,6 +8,8 @@ import android.media.RingtoneManager
 import android.net.Uri
 import android.os.Handler
 import android.os.Looper
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
@@ -28,6 +30,7 @@ class RingerModeListAdapter(
         var bar: SeekBar? = null
     }
 
+    private val _activity = _context as MainActivity
     private val _listSeekBar = listOf<SeekBar?>().toMutableList()
 
     init {
@@ -78,18 +81,37 @@ class RingerModeListAdapter(
 
             override fun onStartTrackingTouch(seekBar: SeekBar) {
                 // Write code to perform some action when touch is started.
-                val ringtone = (_context as MainActivity).ringtone
-                ringtone?.stop()
+                _activity.ringtone?.stop()
             }
 
             override fun onStopTrackingTouch(seekBar: SeekBar) {
                 // Write code to perform some action when touch is stopped.
                 audio.setStreamVolume(mode.id, seekBar.progress, 0)
-                // Play sample
-                val volNow = audio.getStreamVolume(mode.id)
-                val volMax = audio.getStreamMaxVolume(mode.id)
-                val volPlay = (volNow.toDouble() / volMax).toFloat()
+                vibrate()
+                playSound()
+            }
+
+            private fun vibrate() {
+                val vibrator = _context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+                vibrator.vibrate(
+                    VibrationEffect.createOneShot(
+                        100,
+                        VibrationEffect.DEFAULT_AMPLITUDE
+                    )
+                )
+            }
+
+            private fun playSound() {
+                // Do NOT play sample sound
+                if (audio.ringerMode != AudioManager.RINGER_MODE_NORMAL) {
+                    return
+                }
+
+                val volumeNow = audio.getStreamVolume(mode.id)
+                val volumeMax = audio.getStreamMaxVolume(mode.id)
+                val volumeToPlay = (volumeNow.toDouble() / volumeMax).toFloat()
                 var ringtoneUri: Uri? = null
+
                 when (mode.id) {
                     AudioManager.STREAM_MUSIC,
                     AudioManager.STREAM_VOICE_CALL ->
@@ -100,10 +122,12 @@ class RingerModeListAdapter(
                         ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
 
                 }
+
                 val ringtone = RingtoneManager.getRingtone(_context, ringtoneUri)
-                ringtone?.volume = volPlay
+                ringtone?.volume = volumeToPlay
                 ringtone?.play()
-                (_context as MainActivity).ringtone = ringtone
+
+                _activity.ringtone = ringtone
             }
         })
 
