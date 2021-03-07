@@ -23,7 +23,6 @@ class RingerModeListAdapter(
     private val _context: Context,
     private val _list: List<RingerMode>
 ) : BaseAdapter() {
-
     internal class ViewHolder {
         var icon: ImageView? = null
         var label: TextView? = null
@@ -31,7 +30,8 @@ class RingerModeListAdapter(
     }
 
     private val _activity = _context as MainActivity
-    private val _listSeekBar = listOf<SeekBar?>().toMutableList()
+    private val _audio = _context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+    private val _seekBarList = listOf<SeekBar?>().toMutableList()
 
     init {
         _context.contentResolver.registerContentObserver(
@@ -40,10 +40,7 @@ class RingerModeListAdapter(
             object : ContentObserver(Handler(Looper.getMainLooper())) {
                 override fun onChange(selfChange: Boolean) {
                     super.onChange(selfChange)
-                    val audio = _context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-                    _listSeekBar.forEachIndexed { i, v ->
-                        v?.progress = audio.getStreamVolume(_list[i].id)
-                    }
+                    updateSeekBars()
                 }
             })
     }
@@ -63,75 +60,8 @@ class RingerModeListAdapter(
             viewHolder = view.tag as ViewHolder
         }
 
-        val audio = _context.getSystemService(Context.AUDIO_SERVICE) as AudioManager
-        val mode = _list[position]
-
-        viewHolder.icon?.setImageIcon(Icon.createWithResource(_context, mode.icon))
-
-        viewHolder.label?.text = _context.getString(mode.label)
-        viewHolder.label?.textSize = 20f
-
-        viewHolder.bar?.max = audio.getStreamMaxVolume(mode.id)
-        viewHolder.bar?.min = audio.getStreamMinVolume(mode.id)
-        viewHolder.bar?.progress = audio.getStreamVolume(mode.id)
-        viewHolder.bar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-                // Write code to perform some action when progress is changed.
-            }
-
-            override fun onStartTrackingTouch(seekBar: SeekBar) {
-                // Write code to perform some action when touch is started.
-                _activity.ringtone?.stop()
-            }
-
-            override fun onStopTrackingTouch(seekBar: SeekBar) {
-                // Write code to perform some action when touch is stopped.
-                audio.setStreamVolume(mode.id, seekBar.progress, 0)
-                vibrate()
-                playSound()
-            }
-
-            private fun vibrate() {
-                val vibrator = _context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
-                vibrator.vibrate(
-                    VibrationEffect.createOneShot(
-                        100,
-                        VibrationEffect.DEFAULT_AMPLITUDE
-                    )
-                )
-            }
-
-            private fun playSound() {
-                // Do NOT play sample sound
-                if (audio.ringerMode != AudioManager.RINGER_MODE_NORMAL) {
-                    return
-                }
-
-                val volumeNow = audio.getStreamVolume(mode.id)
-                val volumeMax = audio.getStreamMaxVolume(mode.id)
-                val volumeToPlay = (volumeNow.toDouble() / volumeMax).toFloat()
-                var ringtoneUri: Uri? = null
-
-                when (mode.id) {
-                    AudioManager.STREAM_MUSIC,
-                    AudioManager.STREAM_VOICE_CALL ->
-                        ringtoneUri = Uri.parse("content://media/internal/audio/media/122")
-                    AudioManager.STREAM_RING ->
-                        ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
-                    AudioManager.STREAM_ALARM ->
-                        ringtoneUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
-
-                }
-
-                val ringtone = RingtoneManager.getRingtone(_context, ringtoneUri)
-                ringtone?.volume = volumeToPlay
-                ringtone?.play()
-
-                _activity.ringtone = ringtone
-            }
-        })
-
-        _listSeekBar.add(viewHolder.bar)
+        updateViewHolder(viewHolder, position)
+        _seekBarList.add(viewHolder.bar)
 
         return view as View
     }
@@ -148,4 +78,79 @@ class RingerModeListAdapter(
         return _list.size
     }
 
+    fun updateSeekBars() {
+        _seekBarList.forEachIndexed { i, seekBar ->
+            seekBar?.progress = _audio.getStreamVolume(_list[i].id)
+        }
+    }
+
+    private fun updateViewHolder(viewHolder: ViewHolder, position: Int) {
+        val mode = _list[position]
+
+        viewHolder.icon?.setImageIcon(Icon.createWithResource(_context, mode.icon))
+
+        viewHolder.label?.text = _context.getString(mode.label)
+        viewHolder.label?.textSize = 20f
+
+        viewHolder.bar?.max = _audio.getStreamMaxVolume(mode.id)
+        viewHolder.bar?.min = _audio.getStreamMinVolume(mode.id)
+        viewHolder.bar?.progress = _audio.getStreamVolume(mode.id)
+
+        viewHolder.bar?.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
+                // Write code to perform some action when progress is changed.
+            }
+
+            override fun onStartTrackingTouch(seekBar: SeekBar) {
+                // Write code to perform some action when touch is started.
+                _activity.ringtone?.stop()
+            }
+
+            override fun onStopTrackingTouch(seekBar: SeekBar) {
+                // Write code to perform some action when touch is stopped.
+                _audio.setStreamVolume(mode.id, seekBar.progress, 0)
+                vibrate()
+                playSound(mode.id)
+            }
+        })
+    }
+
+    private fun vibrate() {
+        val vibrator = _context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
+        vibrator.vibrate(
+            VibrationEffect.createOneShot(
+                100,
+                VibrationEffect.DEFAULT_AMPLITUDE
+            )
+        )
+    }
+
+    private fun playSound(streamType: Int) {
+        // Only play the sound on normal mode
+        if (_audio.ringerMode != AudioManager.RINGER_MODE_NORMAL) {
+            return
+        }
+
+        val volumeNow = _audio.getStreamVolume(streamType)
+        val volumeMax = _audio.getStreamMaxVolume(streamType)
+        val volumeValue = (volumeNow.toDouble() / volumeMax).toFloat()
+        val ringtoneUri = getRingtoneUri(streamType)
+        val ringtone = RingtoneManager.getRingtone(_context, ringtoneUri)
+        ringtone?.volume = volumeValue
+        ringtone?.play()
+
+        _activity.ringtone = ringtone
+    }
+
+    private fun getRingtoneUri(streamType: Int): Uri {
+        when (streamType) {
+            AudioManager.STREAM_RING ->
+                return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_RINGTONE)
+            AudioManager.STREAM_NOTIFICATION ->
+                return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+            AudioManager.STREAM_ALARM ->
+                return RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM)
+        }
+        return Uri.parse("content://media/internal/audio/media/122")
+    }
 }

@@ -12,7 +12,6 @@ import android.service.quicksettings.TileService
 import android.util.Log
 
 class RingerModeTileService : TileService() {
-
     private val _tileData: Map<String, Any>
         get() {
             val audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
@@ -33,9 +32,11 @@ class RingerModeTileService : TileService() {
             return mapOf()
         }
 
+    private lateinit var _receiver: BroadcastReceiver
+
     override fun onCreate() {
         super.onCreate()
-        Log.d("onCreate", "")
+        Log.d("RingerModeTileService", "onCreate")
 
         val receiver: BroadcastReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
@@ -44,12 +45,19 @@ class RingerModeTileService : TileService() {
         }
         val filter = IntentFilter(AudioManager.RINGER_MODE_CHANGED_ACTION)
         registerReceiver(receiver, filter)
+        _receiver = receiver
     }
-
 
     override fun onClick() {
         super.onClick()
+        Log.d("RingerModeTileService", "onClick")
         updateRingerMode()
+    }
+
+    override fun onDestroy() {
+        super.onClick()
+        Log.d("RingerModeTileService", "onDestroy")
+        unregisterReceiver(_receiver)
     }
 
     private fun updateTile() {
@@ -62,7 +70,7 @@ class RingerModeTileService : TileService() {
             qsTile.updateTile()
         } catch (ex: Exception) {
             @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-            Log.e("Tile", ex.message)
+            Log.e("RingerModeTileService", ex.message)
         }
     }
 
@@ -80,19 +88,24 @@ class RingerModeTileService : TileService() {
             // Change ringer mode
             if (notification.isNotificationPolicyAccessGranted) {
                 val audio = getSystemService(Context.AUDIO_SERVICE) as AudioManager
-                when (audio.ringerMode) {
-                    AudioManager.RINGER_MODE_NORMAL ->
-                        audio.ringerMode = AudioManager.RINGER_MODE_VIBRATE
-                    AudioManager.RINGER_MODE_VIBRATE,
-                    AudioManager.RINGER_MODE_SILENT -> {
-                        audio.ringerMode = AudioManager.RINGER_MODE_NORMAL
-                    }
-                }
+                val nextRingerMode = getNextRingerMode(audio.ringerMode)
+                audio.ringerMode = nextRingerMode
             }
         } catch (ex: Exception) {
             @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-            Log.e("RingerMode", ex.message)
+            Log.e("RingerModeTileService", ex.message)
         }
     }
 
+    private fun getNextRingerMode(curRingerMode: Int): Int {
+        when (curRingerMode) {
+            AudioManager.RINGER_MODE_NORMAL ->
+                return AudioManager.RINGER_MODE_VIBRATE
+            AudioManager.RINGER_MODE_VIBRATE ->
+                return AudioManager.RINGER_MODE_SILENT
+            AudioManager.RINGER_MODE_SILENT ->
+                return AudioManager.RINGER_MODE_NORMAL
+        }
+        return AudioManager.RINGER_MODE_NORMAL
+    }
 }

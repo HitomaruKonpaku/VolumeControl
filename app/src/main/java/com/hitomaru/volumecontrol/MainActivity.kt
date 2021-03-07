@@ -3,6 +3,7 @@ package com.hitomaru.volumecontrol
 import android.media.AudioManager
 import android.media.Ringtone
 import android.os.Bundle
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.ListView
@@ -11,7 +12,7 @@ import com.google.android.material.snackbar.Snackbar
 import kotlinx.android.synthetic.main.activity_main.*
 
 class MainActivity : AppCompatActivity() {
-
+    private lateinit var _adapter: RingerModeListAdapter
     private var _ringtone: Ringtone? = null
 
     var ringtone: Ringtone?
@@ -22,15 +23,31 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        Log.d("MainActivity", "onCreate")
         setContentView(R.layout.activity_main)
         setSupportActionBar(toolbar)
 
         fab.setOnClickListener { view ->
             Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null).show()
+                .setAction("Action", null)
+                .show()
         }
 
-        runCustomize()
+        initListView()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        Log.d("MainActivity", "onResume")
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        Log.d("MainActivity", "onWindowFocusChanged")
+        _ringtone?.stop()
+        if (hasFocus) {
+            _adapter.updateSeekBars()
+        }
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -49,12 +66,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    override fun onWindowFocusChanged(hasFocus: Boolean) {
-        super.onWindowFocusChanged(hasFocus)
-        _ringtone?.stop()
-    }
-
-    private fun runCustomize() {
+    private fun initListView() {
         val lv = findViewById<ListView>(R.id.ringer_mode_list)
         val modes = listOf(
             RingerMode(
@@ -73,12 +85,18 @@ class MainActivity : AppCompatActivity() {
                 AudioManager.STREAM_RING
             ),
             RingerMode(
+                R.drawable.ic_audio_stream_notifications,
+                R.string.stream_notification,
+                AudioManager.STREAM_NOTIFICATION
+            ),
+            RingerMode(
                 R.drawable.ic_audio_stream_alarm,
                 R.string.stream_alarm,
                 AudioManager.STREAM_ALARM
             )
         )
-        lv.adapter = RingerModeListAdapter(this, modes)
-    }
 
+        _adapter = RingerModeListAdapter(this, modes)
+        lv.adapter = _adapter
+    }
 }
